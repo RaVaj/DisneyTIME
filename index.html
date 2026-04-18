@@ -840,7 +840,7 @@ function toggleChecklist() {
 }
 
 // --- タイムライン描画 ---
-function renderTimeline() {
+function renderTimeline(skipAnim = false) {
   const container = document.getElementById("timeline");
   // 既存イベントカードを削除（now-indicatorとtimeline-lineは保持）
   const existing = container.querySelectorAll(".event-item, .section-label");
@@ -925,8 +925,28 @@ function renderTimeline() {
 
     container.appendChild(item);
   });
-}
 
+  // アニメーション：skipAnim=true なら即表示、false なら IntersectionObserver でスクロール検知
+  if (skipAnim) {
+    container.querySelectorAll('.event-item').forEach(el => {
+      el.style.transitionDelay = '0s';
+      el.classList.add('visible');
+    });
+  } else {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+    container.querySelectorAll('.event-item').forEach((el, i) => {
+      el.style.transitionDelay = `${Math.min(i * 0.04, 0.3)}s`;
+      obs.observe(el);
+    });
+  }
+}
 // --- now-indicator 位置更新 ---
 function updateNowIndicator() {
   const container = document.getElementById("timeline");
@@ -1022,7 +1042,7 @@ function toggleEventDone(id, e) {
   e.stopPropagation();
   checkedEvents[id] = !checkedEvents[id];
   saveState();
-  renderTimeline();
+  renderTimeline(true);
   updateNowIndicator();
   updateNextEvent();
 }
@@ -1088,20 +1108,6 @@ function init() {
   updateNowIndicator();
   updateNextEvent();
 
-  // スクロールアニメーション（IntersectionObserver）
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.classList.add('visible');
-        observer.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
-
-  document.querySelectorAll('.event-item').forEach((el, i) => {
-    el.style.transitionDelay = `${Math.min(i * 0.04, 0.3)}s`;
-    observer.observe(el);
-  });
   setInterval(() => {
     updateClock();
   }, 1000);
@@ -1111,7 +1117,7 @@ function init() {
     updateParkHours();
     updateNowIndicator();
     updateNextEvent();
-    renderTimeline();
+    renderTimeline(true);
   }, 60000);
 
   // チェックリストを初期表示（全未完の場合は開く）
