@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>TDS25 Day Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== CSS変数 ===== */
+:root {
+  --navy: #0d1b2a;
+  --navy-mid: #132338;
+  --navy-light: #1a3050;
+  --blue: #1e7abf;
+  --blue-light: #4faad9;
+  --blue-glow: rgba(79,170,217,0.2);
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --white: #f0f4f8;
+  --white-dim: rgba(240,244,248,0.6);
+  --white-faint: rgba(240,244,248,0.12);
+  --border: rgba(240,244,248,0.1);
+  --border-strong: rgba(240,244,248,0.2);
+
+  --status-confirmed: #4caf7d;
+  --status-dpa: #c9a84c;
+  --status-entry: #4faad9;
+  --status-recommended: #7ecfcf;
+  --status-warning: #e07b5a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--navy);
+  color: var(--white);
+  font-family: 'DM Sans', 'Noto Sans JP', sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(30,122,191,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(201,168,76,0.08) 0%, transparent 50%);
+}
+
+/* ===== ヘッダー ===== */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(13,27,42,0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px 12px;
+}
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--white);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+.header-subtitle {
+  font-size: 11px;
+  color: var(--white-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.header-clock {
+  text-align: right;
+}
+.clock-time {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 34px;
+  font-weight: 400;
+  color: var(--gold-light);
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+.clock-date {
+  font-size: 10px;
+  color: var(--white-dim);
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+.park-hours {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(30,122,191,0.12);
+  border: 1px solid rgba(79,170,217,0.25);
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.ph-item { display: flex; align-items: center; gap: 4px; }
+.ph-icon { font-size: 11px; }
+.ph-label { font-size: 10px; color: var(--white-dim); }
+.ph-val { font-size: 12px; font-weight: 500; color: var(--blue-light); font-family: 'Cormorant Garamond', serif; }
+.ph-happy .ph-val { color: var(--gold-light); }
+.ph-divider { font-size: 10px; color: var(--border-strong); }
+.ph-remain { font-size: 10px; color: var(--white-dim); margin-left: auto; }
+.ph-remain.open-now { color: var(--status-confirmed); }
+.ph-remain.closed { color: var(--status-warning); }
+
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white-faint);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.header-next:active { background: rgba(240,244,248,0.18); }
+.next-label { font-size: 11px; color: var(--white-dim); }
+.next-title { font-size: 15px; font-weight: 500; color: var(--white); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+.next-time { font-size: 15px; font-weight: 500; color: var(--gold-light); white-space: nowrap; }
+.next-arrow { font-size: 12px; color: var(--white-dim); }
+
+/* ===== チェックリストバナー ===== */
+.checklist-banner {
+  margin: 12px 16px;
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(201,168,76,0.06);
+}
+.checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+}
+.checklist-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.checklist-icon { font-size: 16px; }
+.checklist-title { font-size: 13px; font-weight: 500; color: var(--gold-light); }
+.checklist-progress { font-size: 11px; color: var(--white-dim); }
+.checklist-toggle { font-size: 16px; color: var(--white-dim); transition: transform 0.25s; }
+.checklist-toggle.open { transform: rotate(180deg); }
+.checklist-body {
+  border-top: 1px solid rgba(201,168,76,0.2);
+  padding: 4px 0;
+  display: none;
+}
+.checklist-body.open { display: block; }
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.check-item:active { background: var(--white-faint); }
+.check-box {
+  width: 20px; height: 20px;
+  border: 1.5px solid rgba(201,168,76,0.5);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.check-box.done { background: var(--gold); border-color: var(--gold); }
+.check-box.done::after { content: '✓'; font-size: 12px; color: var(--navy); font-weight: 700; }
+.check-label { font-size: 13px; color: var(--white); transition: all 0.2s; }
+.check-item.done .check-label { text-decoration: line-through; color: var(--white-dim); }
+
+/* ===== タイムライン ===== */
+.timeline {
+  padding: 8px 16px 40px;
+  position: relative;
+}
+.timeline-line {
+  position: absolute;
+  left: 44px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+  pointer-events: none;
+}
+
+/* 現在時刻インジケーター */
+.now-indicator {
+  position: absolute;
+  left: 16px;
+  right: 0;
+  height: 2px;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.now-line {
+  flex: 1;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent 0px, #ff4d6d 28px, #ff4d6d 100%);
+}
+.now-dot {
+  width: 8px; height: 8px;
+  background: #ff4d6d;
+  border-radius: 50%;
+  position: absolute;
+  left: 40px;
+  box-shadow: 0 0 6px #ff4d6d;
+}
+.now-label {
+  position: absolute;
+  right: 0;
+  font-size: 10px;
+  color: #ff4d6d;
+  background: var(--navy);
+  padding: 0 6px;
+  letter-spacing: 0.04em;
+}
+
+/* ===== イベントカード ===== */
+.event-item {
+  display: flex;
+  gap: 0;
+  margin-bottom: 4px;
+  position: relative;
+}
+
+/* ===== ハイライトカード ===== */
+.event-card.hl-show {
+  border-color: rgba(79,170,217,0.55);
+  background: rgba(20,55,90,0.9);
+  box-shadow: 0 0 0 1px rgba(79,170,217,0.2), inset 3px 0 0 var(--blue-light);
+}
+.event-card.hl-show .event-title { color: #a8dcf5; }
+.event-item.hl-show .event-dot { border-color: var(--blue-light); background: var(--blue-light); box-shadow: 0 0 8px rgba(79,170,217,0.7); }
+.event-item.hl-show .event-time { color: #a8dcf5; }
+
+.event-card.hl-deadline {
+  border-color: rgba(224,123,90,0.6);
+  background: rgba(60,20,15,0.7);
+  box-shadow: 0 0 0 1px rgba(224,123,90,0.2), inset 3px 0 0 #e07b5a;
+}
+.event-card.hl-deadline .event-title { color: #f5a590; }
+.event-item.hl-deadline .event-dot { border-color: #e07b5a; background: #e07b5a; box-shadow: 0 0 8px rgba(224,123,90,0.7); }
+.event-item.hl-deadline .event-time { color: #f5a590; }
+
+/* ===== スクロールアニメーション ===== */
+.event-item {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.42s ease, transform 0.42s ease;
+}
+.event-item.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.event-item.past.visible { opacity: 0.45; }
+.event-item.done.visible { opacity: 0.35; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.event-time-col {
+  width: 44px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-top: 14px;
+  padding-right: 12px;
+  position: relative;
+  z-index: 1;
+}
+.event-time {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blue-light);
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.event-dot-col {
+  width: 0;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 16px;
+  position: relative;
+  z-index: 2;
+}
+.event-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--navy-light);
+  border: 2px solid var(--blue);
+  flex-shrink: 0;
+  transition: all 0.3s;
+  position: relative;
+  left: -5px;
+}
+.event-item.past .event-dot { border-color: var(--border-strong); background: var(--navy-mid); }
+.event-item.current .event-dot { border-color: var(--gold); background: var(--gold); box-shadow: 0 0 8px rgba(201,168,76,0.6); }
+
+.event-card-col {
+  flex: 1;
+  padding: 0 0 16px 14px;
+}
+.event-card {
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: all 0.25s;
+  cursor: pointer;
+}
+.event-card:active { background: var(--navy-light); }
+.event-item.past .event-card {
+  opacity: 0.45;
+}
+.event-item.current .event-card {
+  border-color: rgba(201,168,76,0.4);
+  background: rgba(26,48,80,0.8);
+  box-shadow: 0 2px 16px rgba(201,168,76,0.1);
+}
+.event-item.done .event-card {
+  opacity: 0.35;
+}
+
+.event-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.event-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--white);
+  line-height: 1.4;
+  flex: 1;
+}
+.event-item.done .event-title {
+  text-decoration: line-through;
+  color: var(--white-dim);
+}
+.event-check-btn {
+  width: 26px; height: 26px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--white-dim);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  margin-top: -1px;
+}
+.event-check-btn.done { background: var(--status-confirmed); border-color: var(--status-confirmed); color: white; }
+
+.event-location {
+  font-size: 11px;
+  color: var(--white-dim);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.event-location::before { content: '📍'; font-size: 10px; }
+
+.event-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.badge-confirmed { background: rgba(76,175,125,0.2); color: #7edda8; border: 1px solid rgba(76,175,125,0.3); }
+.badge-dpa { background: rgba(201,168,76,0.2); color: #e8c97a; border: 1px solid rgba(201,168,76,0.35); }
+.badge-entry { background: rgba(79,170,217,0.2); color: #7ecfef; border: 1px solid rgba(79,170,217,0.3); }
+.badge-recommended { background: rgba(126,207,207,0.2); color: #a0e8e8; border: 1px solid rgba(126,207,207,0.3); }
+.badge-warning { background: rgba(224,123,90,0.2); color: #f0a088; border: 1px solid rgba(224,123,90,0.3); }
+
+.event-note-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--blue-light);
+  cursor: pointer;
+  user-select: none;
+}
+.event-note-toggle .arrow { transition: transform 0.2s; display: inline-block; }
+.event-note-toggle.open .arrow { transform: rotate(90deg); }
+.event-note-body {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  border-left: 2px solid var(--blue);
+  font-size: 12px;
+  color: var(--white-dim);
+  line-height: 1.65;
+  display: none;
+}
+.event-note-body.open { display: block; }
+.event-note-body p { margin-bottom: 6px; }
+.event-note-body p:last-child { margin-bottom: 0; }
+.event-checklist {
+  margin-top: 8px;
+}
+.event-check-sub {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+  color: var(--white-dim);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sub-box {
+  width: 14px; height: 14px;
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.sub-box.done { background: var(--gold); border-color: var(--gold); }
+.sub-box.done::after { content: '✓'; font-size: 9px; color: var(--navy); font-weight: 700; }
+.event-check-sub.done > span { text-decoration: line-through; opacity: 0.5; }
+
+/* ===== フッター ===== */
+.footer {
+  text-align: center;
+  padding: 20px 16px 40px;
+  font-size: 11px;
+  color: rgba(240,244,248,0.25);
+  line-height: 1.7;
+  border-top: 1px solid var(--border);
+  margin: 0 16px;
+}
+.footer a { color: var(--blue-light); text-decoration: none; }
+
+/* ===== ユーティリティ ===== */
+.section-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(240,244,248,0.3);
+  padding: 16px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 58px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-title">TDS25 Day Planner</div>
+      <div class="header-subtitle" id="header-date">2026.04.27 — Tokyo DisneySea</div>
+    </div>
+    <div class="header-clock">
+      <div class="clock-time" id="clock-time">--:--</div>
+      <div class="clock-date" id="clock-date">----</div>
+    </div>
+  </div>
+  <div class="park-hours" id="park-hours-bar">
+    <span class="ph-item">
+      <span class="ph-icon">🏰</span>
+      <span class="ph-label">公式開園</span>
+      <span class="ph-val" id="ph-open">--:--</span>
+    </span>
+    <span class="ph-divider">|</span>
+    <span class="ph-item">
+      <span class="ph-icon">🌙</span>
+      <span class="ph-label">閉園</span>
+      <span class="ph-val" id="ph-close">--:--</span>
+    </span>
+    <span class="ph-divider">|</span>
+    <span class="ph-item ph-happy" title="ホテル宿泊者のみ（今回は非該当）" style="opacity:0.45">
+      <span class="ph-icon">🏨</span>
+      <span class="ph-label">ﾊｯﾋﾟｰEnt.※</span>
+      <span class="ph-val" id="ph-happy">--:--</span>
+    </span>
+    <span class="ph-remain" id="ph-remain"></span>
+  </div>
+  <div class="header-next" id="next-event-bar" onclick="scrollToNext()">
+    <span class="next-label">次のイベント</span>
+    <span class="next-title" id="next-title">読み込み中...</span>
+    <span class="next-time" id="next-time-str"></span>
+    <span class="next-arrow">›</span>
+  </div>
+</div>
+
+<div class="checklist-banner">
+  <div class="checklist-header" onclick="toggleChecklist()">
+    <div class="checklist-header-left">
+      <span class="checklist-icon">⚡</span>
+      <span class="checklist-title">入園直後にやること</span>
+      <span class="checklist-progress" id="checklist-progress">0 / 5</span>
+    </div>
+    <span class="checklist-toggle" id="checklist-toggle">▾</span>
+  </div>
+  <div class="checklist-body" id="checklist-body">
+  </div>
+</div>
+
+<div class="timeline" id="timeline">
+  <div class="timeline-line"></div>
+  <div class="now-indicator" id="now-indicator" style="display:none">
+    <div class="now-dot"></div>
+    <div class="now-line"></div>
+    <div class="now-label" id="now-label">NOW</div>
+  </div>
+</div>
+
+<div class="footer">
+  ⚓ 花火・ビリーヴは悪天候・上空気流により中止の場合があります<br>
+  当日は <a href="https://www.tokyodisneyresort.jp/tds/daily/calendar/20260427/" target="_blank">公式アプリ</a> で最終確認を<br><br>
+  TDS25 Day Planner — 非公式ファンツール
+</div>
+
+<script>
+// ================================================================
+// ★★★ スケジュール設定（ここを編集してください）★★★
+// ================================================================
+
+const CONFIG = {
+  date: "2026-04-27",           // 来園日（YYYY-MM-DD）
+  parkName: "東京ディズニーシー",
+  title: "TDS25 Day Planner",
+  openTime: "08:45",            // 公式開園時間・一般（要確認・変更可）★4/27確認済み
+  closeTime: "21:00",           // 閉園時間（要確認・変更可）★4/27確認済み
+  happyEntryTime: "08:30",      // ハッピーエントリー（ホテル宿泊者のみ・非該当）
+  earlyOpenNote: "実際の入園は混雑状況により8:30〜8:40頃に前倒しになる場合あり",
+};
+
+// --- 入園直後チェックリスト ---
+// text: タスク内容
+const ENTRANCE_CHECKLIST = [
+  { id: "ec1", text: "① ソアリン DPA 購入（最優先）" },
+  { id: "ec2", text: "② ビリーヴ！ DPA 購入" },
+  { id: "ec3", text: "③ セレブレーション（14:00回）エントリー受付" },
+  { id: "ec4", text: "④ グッズショップ スタンバイパス取得" },
+  { id: "ec5", text: "⑤ ジュビリーブルーメモリーズ スタンバイパス取得" },
+];
+
+// --- スケジュールイベント ---
+// id        : 一意のID（変更しないこと、localStorage保存に使用）
+// time      : "HH:MM" 形式
+// title     : イベント名
+// location  : 場所（省略可）
+// status    : 配列。使える値: "confirmed" "dpa" "entry" "recommended" "warning"
+// highlight : "show"（ショー・体験強調）/ "deadline"（時間制限強調）/ 省略で通常
+// note      : 詳細メモ（省略可）。\n で改行
+// checklist : サブタスク配列（省略可）[{ id, text }]
+// section   : セクションラベル（省略可）。直前に区切りを表示
+const EVENTS = [
+  {
+    id: "park-open",
+    time: "08:00",
+    title: "🚶 パーク到着・保安検査場へ並ぶ",
+    location: "東京ディズニーシー エントランス前",
+    status: ["warning"],
+    section: "開園前",
+    note: "DPAを確実に取るために開園45分前にはエントランス前に到着したい。保安検査場はシーの場合、一般開園（8:45）の約15分前（8:30頃）スタート。\n\n⚠️ ハッピーエントリー（ホテル宿泊者）は8:30入園のため、DPA競争でやや不利。開園前から前方の列を確保しておくことが大事。",
+  },
+  {
+    id: "entrance",
+    time: "08:45",
+    title: "🏰 一般開園・入園・DPA操作タイム",
+    location: "メインエントランス",
+    status: ["confirmed", "warning"],
+    section: "午前",
+    note: "公式一般開園 8:45（ホテル非宿泊者）。混雑状況により8:30〜8:40頃に前倒しになる場合もあり、当日公式アプリで確認を。\n\n入園直後すぐにアプリで5つの操作を実施。友達と役割分担がおすすめ。DPAはソアリン→ビリーヴの順。アトラクションDPAは同時に1つしか保有不可（アナ雪とソアリンは同時取得不可）。",
+    checklist: [],
+  },
+  {
+    id: "attraction1",
+    time: "09:30",
+    title: "アナ雪 or ソアリン",
+    location: "ファンタジースプリングス / アラビアンコースト奥",
+    status: ["confirmed", "dpa"],
+    note: "DPAを取得できた方を優先乗車。DPAなしの場合、ソアリンの待ち時間は平日でも90〜120分超えが多い。アナ雪はDPA追加発行あり（キャンセル拾いも狙える）。",
+  },
+  {
+    id: "memories",
+    time: "10:30",
+    title: "ジュビリーブルーメモリーズ ✦",
+    location: "リメンブランツェ（ポンテ・ヴェッキオ橋）",
+    status: ["recommended"],
+    highlight: "show",
+    note: "スタンバイパス必須・2,000円。ボトル購入→ジュビリーブルーストーン選び→ブルーの空間で記念撮影のコース。所要約15〜20分。\n1人1アイテム1点制限。ハーバー近くなので次のDTGや移動とまとめて動きやすい。",
+  },
+  {
+    id: "goods",
+    time: "12:00",
+    title: "グッズショップ（被り物・カチューシャ）",
+    location: "スタンバイパス指定ショップ",
+    status: ["warning"],
+    note: "スタンバイパスの指定時間になったら移動。午前中より少し落ち着いた時間帯。\n・カチューシャ 2,400円〜\n・ジュビリーバッジ 1,000円（単体）/ 1,600円（バッジ＆リボン）\nぬいぐるみ等は1人1点制限あり。",
+  },
+  {
+    id: "dtg",
+    time: "12:50",
+    title: "★ダンス・ザ・グローブ！",
+    location: "ウォーターフロントパーク（アメリカンウォーターフロント）",
+    status: ["recommended", "entry"],
+    note: "25周年の新ステージショー（約25分）。ミッキー・ミラベル・ラプンツェル・ヒロが出演。フィナーレにパイロが打ちあがる演出あり。12:50 / 14:35 / 16:55 / 18:40の4公演。\nエントリー抽選 or DPA 2,500円/人。自由席（立ち見）あり。",
+  },
+  {
+    id: "harbor-move",
+    time: "13:30",
+    title: "ハーバーへ移動・場所取り",
+    location: "メディテレーニアンハーバー",
+    status: [],
+    note: "14:00セレブレーション（確定回）の30分前にポジション確保。エントリー当選者は専用エリアへ移動。",
+  },
+  {
+    id: "celebration2",
+    time: "14:00",
+    title: "スパークリング・ジュビリー・セレブレーション ✦",
+    location: "メディテレーニアンハーバー",
+    status: ["confirmed", "entry"],
+    highlight: "show",
+    section: "午後",
+    note: "公式時間14:00（確認済）。約15分。エントリー当選者は専用エリアへ。\nミッキー・ミニー・ドナルド・デイジー・グーフィー・プルート・ダッフィー・シェリーメイほか大集合。",
+  },
+  {
+    id: "lunch",
+    time: "15:00",
+    title: "ランチ（ショーレストラン）✦",
+    location: "ショーレストラン（要予約確認）",
+    status: ["confirmed"],
+    highlight: "show",
+    note: "休憩・25周年体験を整理するタイム。予約時間の再確認を。フード＆フェスティバル（〜6/30）の期間限定メニューも要チェック。",
+  },
+  {
+    id: "gondola-prep",
+    time: "17:00",
+    title: "⏰ ゴンドラへ移動・列に並ぶ【時間厳守】",
+    location: "ヴェネツィアン・ゴンドラ乗り場",
+    status: ["warning"],
+    highlight: "deadline",
+    note: "⚠️ 4/27の日没は18:24。受付は18:15には終了リスクあり。17:15には必ず並ぶこと。遅くとも17:00には向かい始める。",
+  },
+  {
+    id: "gondola",
+    time: "18:15",
+    title: "ゴンドラ乗船〜日の入り 🌅",
+    location: "ヴェネツィアン・ゴンドラ",
+    status: ["confirmed"],
+    note: "18:24日没。運河で夕暮れを満喫。ゴンドラは乗り場近くのリドアイル周辺から出発。",
+  },
+  {
+    id: "believe",
+    time: "19:15",
+    title: "ビリーヴ！〜シー・オブ・ドリームス〜 ✦",
+    location: "メディテレーニアンハーバー",
+    status: ["confirmed", "dpa"],
+    highlight: "show",
+    section: "夜",
+    note: "公式時間19:15〜（4月確認済み）。約30分。DPA完全指定席なので、指定された鑑賞エリアに時間内に向かうだけでOK。\n船体演出・噴水・プロジェクションマッピング・レーザー・小型花火が同期した壮大なショー。",
+  },
+  {
+    id: "columbia-move",
+    time: "19:50",
+    title: "コロンビア号甲板へ移動",
+    location: "S.S.コロンビア号",
+    status: ["warning"],
+    note: "花火（20:15）に向けて早めに甲板を確保。スパークリング・ジュビリー・ナイト（環境演出）が20:00〜スタートなので、移動しながら楽しめる。",
+  },
+  {
+    id: "jubilee-night",
+    time: "20:00",
+    title: "★スパークリング・ジュビリー・ナイト",
+    location: "メディテレーニアンハーバー（ミラコスタ壁面）",
+    status: ["recommended"],
+    note: "ホテルミラコスタ壁面プロジェクションマッピング。20:00 / 20:25 / 20:50の3回。自由鑑賞・無料。花火前後に自然に楽しめる演出。",
+  },
+  {
+    id: "fireworks",
+    time: "20:15",
+    title: "スカイ・フル・オブ・カラーズ（花火）🎆✦",
+    location: "S.S.コロンビア号甲板",
+    status: ["confirmed"],
+    highlight: "show",
+    note: "公式時間20:15（確認済み）。上空気流により中止の場合あり（当日園内放送で告知）。コロンビア号甲板から最高のアングルで鑑賞。",
+  },
+  {
+    id: "park-close",
+    time: "21:00",
+    title: "🌙 閉園",
+    location: "東京ディズニーシー",
+    status: [],
+    section: "閉園",
+    note: "公式閉園時間 21:00（4/27確認済み）。閉園時間を過ぎると退場案内が始まります。花火（20:15〜）終了後はゲート周辺が混雑するため、20:45頃から出口へ向かうのが無難。",
+  },
+];
+
+// ================================================================
+// ★ ここより下はロジック（通常は編集不要）
+// ================================================================
+
+const STORAGE_KEY_EVENTS = "tds25_checked_v2";
+const STORAGE_KEY_CHECKLIST = "tds25_entrance_checked_v2";
+
+// バッジ定義
+const BADGE_MAP = {
+  confirmed:   { cls: "badge-confirmed",   label: "✓ 確定" },
+  dpa:         { cls: "badge-dpa",         label: "💳 DPA" },
+  entry:       { cls: "badge-entry",       label: "🎫 エントリー" },
+  recommended: { cls: "badge-recommended", label: "⭐ 追加推奨" },
+  warning:     { cls: "badge-warning",     label: "⚠ 要注意" },
+};
+
+// --- state ---
+let checkedEvents = {};
+let checkedEntrance = {};
+let checkedSubs = {};
+let openNotes = {};
+
+function loadState() {
+  try {
+    checkedEvents   = JSON.parse(localStorage.getItem(STORAGE_KEY_EVENTS) || "{}");
+    checkedEntrance = JSON.parse(localStorage.getItem(STORAGE_KEY_CHECKLIST) || "{}");
+    checkedSubs     = JSON.parse(localStorage.getItem("tds25_subs_v2") || "{}");
+    openNotes       = {};
+  } catch(e) {}
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY_EVENTS,   JSON.stringify(checkedEvents));
+  localStorage.setItem(STORAGE_KEY_CHECKLIST, JSON.stringify(checkedEntrance));
+  localStorage.setItem("tds25_subs_v2",       JSON.stringify(checkedSubs));
+}
+
+// --- 時刻パース ---
+function parseTime(timeStr) {
+  const [h, m] = timeStr.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function nowMinutes() {
+  const n = new Date();
+  return n.getHours() * 60 + n.getMinutes();
+}
+
+// --- イベント状態判定 ---
+function getEventState(ev, nowMin) {
+  const evMin = parseTime(ev.time);
+  if (checkedEvents[ev.id]) return "done";
+  if (nowMin > evMin + 30) return "past";
+  if (Math.abs(nowMin - evMin) <= 30) return "current";
+  return "future";
+}
+
+// --- チェックリスト描画 ---
+function renderChecklist() {
+  const body = document.getElementById("checklist-body");
+  body.innerHTML = "";
+  ENTRANCE_CHECKLIST.forEach(item => {
+    const done = !!checkedEntrance[item.id];
+    const div = document.createElement("div");
+    div.className = "check-item" + (done ? " done" : "");
+    div.innerHTML = `<div class="check-box ${done ? 'done' : ''}"></div><span class="check-label">${item.text}</span>`;
+    div.addEventListener("click", () => {
+      checkedEntrance[item.id] = !checkedEntrance[item.id];
+      saveState();
+      renderChecklist();
+    });
+    body.appendChild(div);
+  });
+  updateChecklistProgress();
+}
+
+function updateChecklistProgress() {
+  const done = Object.values(checkedEntrance).filter(Boolean).length;
+  const total = ENTRANCE_CHECKLIST.length;
+  document.getElementById("checklist-progress").textContent = `${done} / ${total}`;
+}
+
+function toggleChecklist() {
+  const body = document.getElementById("checklist-body");
+  const toggle = document.getElementById("checklist-toggle");
+  const isOpen = body.classList.contains("open");
+  body.classList.toggle("open", !isOpen);
+  toggle.classList.toggle("open", !isOpen);
+}
+
+// --- タイムライン描画 ---
+function renderTimeline() {
+  const container = document.getElementById("timeline");
+  // 既存イベントカードを削除（now-indicatorとtimeline-lineは保持）
+  const existing = container.querySelectorAll(".event-item, .section-label");
+  existing.forEach(e => e.remove());
+
+  const nowMin = nowMinutes();
+  let lastSection = null;
+
+  EVENTS.forEach((ev, idx) => {
+    // セクションラベル
+    if (ev.section && ev.section !== lastSection) {
+      const lbl = document.createElement("div");
+      lbl.className = "section-label";
+      lbl.textContent = ev.section;
+      container.appendChild(lbl);
+      lastSection = ev.section;
+    }
+
+    const state = getEventState(ev, nowMin);
+    const isDone = state === "done";
+    const isPast = state === "past";
+    const isCurrent = state === "current";
+
+    const item = document.createElement("div");
+    item.className = `event-item ${isPast ? 'past' : ''} ${isCurrent ? 'current' : ''} ${isDone ? 'done' : ''} ${ev.highlight ? 'hl-' + ev.highlight : ''}`.replace(/\s+/g,' ').trim();
+    item.id = `ev-${ev.id}`;
+
+    // バッジHTML
+    const badgesHtml = (ev.status || []).map(s => {
+      const b = BADGE_MAP[s];
+      return b ? `<span class="badge ${b.cls}">${b.label}</span>` : "";
+    }).join("");
+
+    // サブチェックリスト
+    let subHtml = "";
+    if (ev.checklist && ev.checklist.length > 0) {
+      subHtml = `<div class="event-checklist">` +
+        ev.checklist.map(sub => {
+          const subDone = !!checkedSubs[sub.id];
+          return `<div class="event-check-sub ${subDone ? 'done' : ''}" onclick="toggleSub('${sub.id}', event)">
+            <div class="sub-box ${subDone ? 'done' : ''}"></div>
+            <span>${sub.text}</span>
+          </div>`;
+        }).join("") +
+        `</div>`;
+    }
+
+    // メモ
+    const noteOpen = !!openNotes[ev.id];
+    const noteLines = ev.note ? ev.note.split("\n").map(l => `<p>${l}</p>`).join("") : "";
+    const noteHtml = ev.note ? `
+      <div class="event-note-toggle ${noteOpen ? 'open' : ''}" onclick="toggleNote('${ev.id}', event)">
+        <span class="arrow">›</span> メモを${noteOpen ? '閉じる' : '見る'}
+      </div>
+      <div class="event-note-body ${noteOpen ? 'open' : ''}" id="note-${ev.id}">
+        ${noteLines}${subHtml}
+      </div>
+    ` : (subHtml ? `<div class="event-note-body open">${subHtml}</div>` : "");
+
+    const hlCardClass = ev.highlight ? `hl-${ev.highlight}` : '';
+    item.innerHTML = `
+      <div class="event-time-col">
+        <span class="event-time">${ev.time}</span>
+      </div>
+      <div class="event-dot-col">
+        <div class="event-dot"></div>
+      </div>
+      <div class="event-card-col">
+        <div class="event-card ${hlCardClass}">
+          <div class="event-card-top">
+            <span class="event-title">${ev.title}</span>
+            <button class="event-check-btn ${isDone ? 'done' : ''}" onclick="toggleEventDone('${ev.id}', event)" aria-label="完了">
+              ${isDone ? '✓' : ''}
+            </button>
+          </div>
+          ${ev.location ? `<div class="event-location">${ev.location}</div>` : ""}
+          ${badgesHtml ? `<div class="event-badges">${badgesHtml}</div>` : ""}
+          ${noteHtml}
+        </div>
+      </div>
+    `;
+
+    container.appendChild(item);
+  });
+}
+
+// --- now-indicator 位置更新 ---
+function updateNowIndicator() {
+  const container = document.getElementById("timeline");
+  const indicator = document.getElementById("now-indicator");
+  const nowMin = nowMinutes();
+
+  // 現在時刻が最初と最後のイベントの間にある場合のみ表示
+  const first = parseTime(EVENTS[0].time);
+  const last  = parseTime(EVENTS[EVENTS.length - 1].time);
+  if (nowMin < first - 30 || nowMin > last + 60) {
+    indicator.style.display = "none";
+    return;
+  }
+
+  // 直前・直後のイベントを探してtop位置を計算
+  let prevItem = null, nextItem = null;
+  let prevMin = first, nextMin = last;
+
+  for (let i = 0; i < EVENTS.length; i++) {
+    const eMin = parseTime(EVENTS[i].time);
+    const el = document.getElementById(`ev-${EVENTS[i].id}`);
+    if (!el) continue;
+    if (eMin <= nowMin) { prevItem = el; prevMin = eMin; }
+    else if (!nextItem) { nextItem = el; nextMin = eMin; }
+  }
+
+  if (!prevItem) { indicator.style.display = "none"; return; }
+
+  const timelineRect = container.getBoundingClientRect();
+  const prevRect = prevItem.getBoundingClientRect();
+
+  let top;
+  if (nextItem) {
+    const nextRect = nextItem.getBoundingClientRect();
+    const ratio = (nowMin - prevMin) / Math.max(nextMin - prevMin, 1);
+    const prevTop = prevRect.top + prevRect.height / 2 - timelineRect.top + container.scrollTop;
+    const nextTop = nextRect.top + nextRect.height / 2 - timelineRect.top + container.scrollTop;
+    // ページ全体の位置で計算（scrollTop使えない場合）
+    top = prevItem.offsetTop + prevItem.offsetHeight / 2 +
+          ratio * (nextItem.offsetTop + nextItem.offsetHeight / 2 - prevItem.offsetTop - prevItem.offsetHeight / 2);
+  } else {
+    top = prevItem.offsetTop + prevItem.offsetHeight;
+  }
+
+  indicator.style.display = "flex";
+  indicator.style.top = `${top}px`;
+
+  const h = new Date().getHours().toString().padStart(2,"0");
+  const m = new Date().getMinutes().toString().padStart(2,"0");
+  document.getElementById("now-label").textContent = `${h}:${m}`;
+}
+
+// --- 次イベント更新 ---
+function updateNextEvent() {
+  const nowMin = nowMinutes();
+  const next = EVENTS.find(ev => !checkedEvents[ev.id] && parseTime(ev.time) > nowMin);
+  if (!next) {
+    document.getElementById("next-title").textContent = "本日のイベント終了";
+    document.getElementById("next-time-str").textContent = "";
+    return;
+  }
+  const diff = parseTime(next.time) - nowMin;
+  document.getElementById("next-title").textContent = next.title;
+  const fmtDiff = d => {
+    const h = Math.floor(d / 60), m = d % 60;
+    const base = h > 0 ? `あと${h}時間${m}分` : `あと${m}分`;
+    return h > 0 ? `${base}（${d}分）` : base;
+  };
+  document.getElementById("next-time-str").textContent =
+    diff <= 0 ? "今！" : fmtDiff(diff);
+}
+
+function scrollToNext() {
+  const nowMin = nowMinutes();
+  const next = EVENTS.find(ev => !checkedEvents[ev.id] && parseTime(ev.time) > nowMin);
+  if (!next) return;
+  const el = document.getElementById(`ev-${next.id}`);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+// --- クロック更新 ---
+function updateClock() {
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2,"0");
+  const m = now.getMinutes().toString().padStart(2,"0");
+  const s = now.getSeconds().toString().padStart(2,"0");
+  document.getElementById("clock-time").textContent = `${h}:${m}`;
+  document.getElementById("clock-date").textContent = CONFIG.date.replace(/-/g,"/");
+}
+
+// --- インタラクション ---
+function toggleEventDone(id, e) {
+  e.stopPropagation();
+  checkedEvents[id] = !checkedEvents[id];
+  saveState();
+  renderTimeline();
+  updateNowIndicator();
+  updateNextEvent();
+}
+
+function toggleNote(id, e) {
+  e.stopPropagation();
+  openNotes[id] = !openNotes[id];
+  const noteEl = document.getElementById(`note-${id}`);
+  const toggleEl = e.currentTarget;
+  if (noteEl) {
+    noteEl.classList.toggle("open", !!openNotes[id]);
+    toggleEl.classList.toggle("open", !!openNotes[id]);
+    toggleEl.childNodes[1].textContent = openNotes[id] ? " メモを閉じる" : " メモを見る";
+  }
+}
+
+function toggleSub(id, e) {
+  e.stopPropagation();
+  checkedSubs[id] = !checkedSubs[id];
+  saveState();
+  const el = e.currentTarget;
+  el.classList.toggle("done", !!checkedSubs[id]);
+  const box = el.querySelector(".sub-box");
+  box.classList.toggle("done", !!checkedSubs[id]);
+}
+
+// --- 開園・閉園時間表示 ---
+function updateParkHours() {
+  document.getElementById("ph-open").textContent  = CONFIG.openTime;
+  document.getElementById("ph-close").textContent = CONFIG.closeTime;
+  document.getElementById("ph-happy").textContent = CONFIG.happyEntryTime;
+
+  const nowMin   = nowMinutes();
+  const openMin  = parseTime(CONFIG.openTime);
+  const closeMin = parseTime(CONFIG.closeTime);
+  const remainEl = document.getElementById("ph-remain");
+
+  if (nowMin < openMin) {
+    const diff = openMin - nowMin;
+    const h = Math.floor(diff / 60), m = diff % 60;
+    const base = h > 0 ? `開園まであと${h}時間${m}分` : `開園まであと${m}分`;
+    remainEl.textContent = h > 0 ? `${base}（${diff}分）` : base;
+    remainEl.className = "ph-remain";
+  } else if (nowMin >= openMin && nowMin < closeMin) {
+    const diff = closeMin - nowMin;
+    const h = Math.floor(diff / 60), m = diff % 60;
+    const base = h > 0 ? `閉園まであと${h}時間${m}分` : `閉園まであと${m}分`;
+    remainEl.textContent = h > 0 ? `${base}（${diff}分）` : base;
+    remainEl.className = "ph-remain open-now";
+  } else {
+    remainEl.textContent = "閉園済み";
+    remainEl.className = "ph-remain closed";
+  }
+}
+
+
+function init() {
+  loadState();
+  renderChecklist();
+  renderTimeline();
+  updateClock();
+  updateParkHours();
+  updateNowIndicator();
+  updateNextEvent();
+
+  // スクロールアニメーション（IntersectionObserver）
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+
+  document.querySelectorAll('.event-item').forEach((el, i) => {
+    el.style.transitionDelay = `${Math.min(i * 0.04, 0.3)}s`;
+    observer.observe(el);
+  });
+  setInterval(() => {
+    updateClock();
+  }, 1000);
+
+  // 1分ごとにインジケーター・次イベント更新
+  setInterval(() => {
+    updateParkHours();
+    updateNowIndicator();
+    updateNextEvent();
+    renderTimeline();
+  }, 60000);
+
+  // チェックリストを初期表示（全未完の場合は開く）
+  const allDone = ENTRANCE_CHECKLIST.every(i => checkedEntrance[i.id]);
+  if (!allDone) {
+    document.getElementById("checklist-body").classList.add("open");
+    document.getElementById("checklist-toggle").classList.add("open");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
