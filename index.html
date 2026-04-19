@@ -9,14 +9,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-/* ===== CSS変数 ===== */
 :root {
   --navy: #0d1b2a;
   --navy-mid: #132338;
   --navy-light: #1a3050;
   --blue: #1e7abf;
   --blue-light: #4faad9;
-  --blue-glow: rgba(79,170,217,0.2);
   --gold: #c9a84c;
   --gold-light: #e8c97a;
   --white: #f0f4f8;
@@ -24,25 +22,47 @@
   --white-faint: rgba(240,244,248,0.12);
   --border: rgba(240,244,248,0.1);
   --border-strong: rgba(240,244,248,0.2);
-
   --status-confirmed: #4caf7d;
-  --status-dpa: #c9a84c;
-  --status-entry: #4faad9;
-  --status-recommended: #7ecfcf;
   --status-warning: #e07b5a;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
+/* ===== 背景アニメーション ===== */
 body {
   background: var(--navy);
   color: var(--white);
   font-family: 'DM Sans', 'Noto Sans JP', sans-serif;
   font-size: 14px;
   min-height: 100vh;
-  background-image:
-    radial-gradient(ellipse at 20% 0%, rgba(30,122,191,0.15) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 100%, rgba(201,168,76,0.08) 0%, transparent 50%);
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: -25%;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(ellipse at 30% 15%, rgba(30,122,191,0.15) 0%, transparent 55%);
+  animation: bgFloat1 14s ease-in-out infinite;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: -25%;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(ellipse at 70% 85%, rgba(201,168,76,0.08) 0%, transparent 50%);
+  animation: bgFloat2 18s ease-in-out infinite;
+}
+@keyframes bgFloat1 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%     { transform: translate(3%,2%) scale(1.04); }
+  66%     { transform: translate(-1%,3%) scale(0.97); }
+}
+@keyframes bgFloat2 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  50%     { transform: translate(-3%,-2%) scale(1.06); }
 }
 
 /* ===== ヘッダー ===== */
@@ -77,9 +97,7 @@ body {
   text-transform: uppercase;
   margin-top: 2px;
 }
-.header-clock {
-  text-align: right;
-}
+.header-clock { text-align: right; }
 .clock-time {
   font-family: 'Cormorant Garamond', serif;
   font-size: 34px;
@@ -113,9 +131,15 @@ body {
 .ph-divider { font-size: 10px; color: var(--border-strong); }
 .ph-remain { font-size: 10px; color: var(--white-dim); margin-left: auto; }
 .ph-remain.open-now { color: var(--status-confirmed); }
+.ph-remain.open-late { color: #f0a088; }
 .ph-remain.closed { color: var(--status-warning); }
-
-
+.ph-remain.open-badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: #7edda8;
+  letter-spacing: 0.04em;
+}
+.header-next {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -148,21 +172,13 @@ body {
   cursor: pointer;
   user-select: none;
 }
-.checklist-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.checklist-header-left { display: flex; align-items: center; gap: 8px; }
 .checklist-icon { font-size: 16px; }
 .checklist-title { font-size: 13px; font-weight: 500; color: var(--gold-light); }
 .checklist-progress { font-size: 11px; color: var(--white-dim); }
 .checklist-toggle { font-size: 16px; color: var(--white-dim); transition: transform 0.25s; }
 .checklist-toggle.open { transform: rotate(180deg); }
-.checklist-body {
-  border-top: 1px solid rgba(201,168,76,0.2);
-  padding: 4px 0;
-  display: none;
-}
+.checklist-body { border-top: 1px solid rgba(201,168,76,0.2); padding: 4px 0; display: none; }
 .checklist-body.open { display: block; }
 .check-item {
   display: flex;
@@ -190,31 +206,22 @@ body {
 .check-item.done .check-label { text-decoration: line-through; color: var(--white-dim); }
 
 /* ===== タイムライン ===== */
-.timeline {
-  padding: 8px 16px 40px;
-  position: relative;
-}
+.timeline { padding: 8px 16px 40px; position: relative; }
 .timeline-line {
   position: absolute;
-  left: 44px;
-  top: 0;
-  bottom: 0;
+  left: 44px; top: 0; bottom: 0;
   width: 1px;
   background: var(--border);
   pointer-events: none;
 }
-
-/* 現在時刻インジケーター */
 .now-indicator {
   position: absolute;
-  left: 16px;
-  right: 0;
+  left: 16px; right: 0;
   height: 2px;
   pointer-events: none;
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: 0;
 }
 .now-line {
   flex: 1;
@@ -245,9 +252,15 @@ body {
   gap: 0;
   margin-bottom: 4px;
   position: relative;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.42s ease, transform 0.42s ease;
 }
+.event-item.visible { opacity: 1; transform: translateY(0); }
+.event-item.past.visible { opacity: 0.45; }
+.event-item.done.visible { opacity: 0.35; }
 
-/* ===== ハイライトカード ===== */
+/* ハイライト */
 .event-card.hl-show {
   border-color: rgba(79,170,217,0.55);
   background: rgba(20,55,90,0.9);
@@ -256,7 +269,6 @@ body {
 .event-card.hl-show .event-title { color: #a8dcf5; }
 .event-item.hl-show .event-dot { border-color: var(--blue-light); background: var(--blue-light); box-shadow: 0 0 8px rgba(79,170,217,0.7); }
 .event-item.hl-show .event-time { color: #a8dcf5; }
-
 .event-card.hl-deadline {
   border-color: rgba(224,123,90,0.6);
   background: rgba(60,20,15,0.7);
@@ -266,50 +278,22 @@ body {
 .event-item.hl-deadline .event-dot { border-color: #e07b5a; background: #e07b5a; box-shadow: 0 0 8px rgba(224,123,90,0.7); }
 .event-item.hl-deadline .event-time { color: #f5a590; }
 
-/* ===== スクロールアニメーション ===== */
-.event-item {
-  opacity: 0;
-  transform: translateY(14px);
-  transition: opacity 0.42s ease, transform 0.42s ease;
-}
-.event-item.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-.event-item.past.visible { opacity: 0.45; }
-.event-item.done.visible { opacity: 0.35; }
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
 .event-time-col {
-  width: 44px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  padding-top: 14px;
-  padding-right: 12px;
-  position: relative;
-  z-index: 1;
+  width: 44px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: flex-end;
+  padding-top: 14px; padding-right: 12px;
+  position: relative; z-index: 1;
 }
 .event-time {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 14px; font-weight: 600;
   color: var(--blue-light);
-  letter-spacing: 0.02em;
-  line-height: 1;
+  letter-spacing: 0.02em; line-height: 1;
 }
 .event-dot-col {
-  width: 0;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 16px;
-  position: relative;
-  z-index: 2;
+  width: 0; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center;
+  padding-top: 16px; position: relative; z-index: 2;
 }
 .event-dot {
   width: 10px; height: 10px;
@@ -318,16 +302,11 @@ body {
   border: 2px solid var(--blue);
   flex-shrink: 0;
   transition: all 0.3s;
-  position: relative;
-  left: -5px;
+  position: relative; left: -5px;
 }
 .event-item.past .event-dot { border-color: var(--border-strong); background: var(--navy-mid); }
 .event-item.current .event-dot { border-color: var(--gold); background: var(--gold); box-shadow: 0 0 8px rgba(201,168,76,0.6); }
-
-.event-card-col {
-  flex: 1;
-  padding: 0 0 16px 14px;
-}
+.event-card-col { flex: 1; padding: 0 0 16px 14px; }
 .event-card {
   background: var(--navy-mid);
   border: 1px solid var(--border);
@@ -337,78 +316,40 @@ body {
   cursor: pointer;
 }
 .event-card:active { background: var(--navy-light); }
-.event-item.past .event-card {
-  opacity: 0.45;
-}
+.event-item.past .event-card { opacity: 0.45; }
 .event-item.current .event-card {
   border-color: rgba(201,168,76,0.4);
   background: rgba(26,48,80,0.8);
   box-shadow: 0 2px 16px rgba(201,168,76,0.1);
 }
-.event-item.done .event-card {
-  opacity: 0.35;
-}
-
-.event-card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-.event-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--white);
-  line-height: 1.4;
-  flex: 1;
-}
-.event-item.done .event-title {
-  text-decoration: line-through;
-  color: var(--white-dim);
-}
+.event-item.done .event-card { opacity: 0.35; }
+.event-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.event-title { font-size: 14px; font-weight: 500; color: var(--white); line-height: 1.4; flex: 1; }
+.event-item.done .event-title { text-decoration: line-through; color: var(--white-dim); }
 .event-check-btn {
   width: 26px; height: 26px;
   border: 1.5px solid var(--border-strong);
-  border-radius: 6px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  color: var(--white-dim);
-  font-size: 14px;
-  cursor: pointer;
+  border-radius: 6px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; color: var(--white-dim);
+  font-size: 14px; cursor: pointer;
   transition: all 0.2s;
   -webkit-tap-highlight-color: transparent;
   margin-top: -1px;
 }
 .event-check-btn.done { background: var(--status-confirmed); border-color: var(--status-confirmed); color: white; }
-
 .event-location {
-  font-size: 11px;
-  color: var(--white-dim);
+  font-size: 11px; color: var(--white-dim);
   margin-top: 4px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  display: flex; align-items: center; gap: 4px;
 }
 .event-location::before { content: '📍'; font-size: 10px; }
-
-.event-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 8px;
-}
+.event-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
 .badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 10px;
-  font-weight: 500;
-  padding: 2px 7px;
-  border-radius: 20px;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
+  display: inline-flex; align-items: center;
+  font-size: 10px; font-weight: 500;
+  padding: 2px 7px; border-radius: 20px;
+  letter-spacing: 0.02em; white-space: nowrap;
 }
 .badge-confirmed { background: rgba(76,175,125,0.2); color: #7edda8; border: 1px solid rgba(76,175,125,0.3); }
 .badge-dpa { background: rgba(201,168,76,0.2); color: #e8c97a; border: 1px solid rgba(201,168,76,0.35); }
@@ -416,18 +357,26 @@ body {
 .badge-recommended { background: rgba(126,207,207,0.2); color: #a0e8e8; border: 1px solid rgba(126,207,207,0.3); }
 .badge-warning { background: rgba(224,123,90,0.2); color: #f0a088; border: 1px solid rgba(224,123,90,0.3); }
 
+/* ===== メモトグル（回転なし・フェード） ===== */
 .event-note-toggle {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   margin-top: 10px;
   font-size: 11px;
   color: var(--blue-light);
   cursor: pointer;
   user-select: none;
 }
-.event-note-toggle .arrow { transition: transform 0.2s; display: inline-block; }
-.event-note-toggle.open .arrow { transform: rotate(90deg); }
+.toggle-icon {
+  font-size: 10px;
+  font-style: normal;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.toggle-label {
+  transition: opacity 0.15s ease;
+}
 .event-note-body {
   margin-top: 8px;
   padding: 10px 12px;
@@ -442,33 +391,78 @@ body {
 .event-note-body.open { display: block; }
 .event-note-body p { margin-bottom: 6px; }
 .event-note-body p:last-child { margin-bottom: 0; }
-.event-checklist {
-  margin-top: 8px;
-}
+.event-checklist { margin-top: 8px; }
 .event-check-sub {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 3px 0;
-  font-size: 12px;
-  color: var(--white-dim);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  display: flex; align-items: flex-start; gap: 6px;
+  padding: 3px 0; font-size: 12px; color: var(--white-dim);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .sub-box {
   width: 14px; height: 14px;
   border: 1px solid rgba(201,168,76,0.4);
-  border-radius: 3px;
-  flex-shrink: 0;
-  margin-top: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 3px; flex-shrink: 0; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
   transition: all 0.2s;
 }
 .sub-box.done { background: var(--gold); border-color: var(--gold); }
 .sub-box.done::after { content: '✓'; font-size: 9px; color: var(--navy); font-weight: 700; }
 .event-check-sub.done > span { text-decoration: line-through; opacity: 0.5; }
+
+/* ===== チェック完了アニメーション（リップル） ===== */
+.event-check-btn {
+  overflow: hidden; /* リップルを内側に収める */
+}
+@keyframes rippleOut {
+  0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.55; }
+  100% { transform: translate(-50%,-50%) scale(3.5); opacity: 0; }
+}
+.ripple-circle {
+  position: absolute;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(79,170,217,0.55);
+  pointer-events: none;
+  animation: rippleOut 0.45s ease-out forwards;
+}
+
+/* ===== チェックリスト全完了セレブレーション ===== */
+.checklist-complete-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  overflow: hidden;
+}
+/* 花火の尾：中央から放射状にスーッと伸びて消える */
+@keyframes fireworkBeam {
+  0%   { transform: translate(-50%,-50%) rotate(var(--angle)) scaleY(0);   opacity: 0.9; }
+  45%  { transform: translate(-50%,-50%) rotate(var(--angle)) scaleY(1);   opacity: 0.9; }
+  100% { transform: translate(-50%,-50%) rotate(var(--angle)) scaleY(1);   opacity: 0;   }
+}
+.fw-beam {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 2px;
+  transform-origin: center bottom;
+  border-radius: 1px;
+  animation: fireworkBeam var(--dur) cubic-bezier(0.22,1,0.36,1) forwards;
+  animation-delay: var(--delay);
+}
+/* 先端の光点 */
+@keyframes fireworkDot {
+  0%,40% { opacity: 0; }
+  55%    { opacity: 1; transform: translate(var(--ex), var(--ey)) scale(1.4); }
+  100%   { opacity: 0; transform: translate(var(--ex), var(--ey)) scale(0.3); }
+}
+.fw-dot {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  margin: -2.5px;
+  animation: fireworkDot var(--dur) ease-out forwards;
+  animation-delay: var(--delay);
+}
 
 /* ===== フッター ===== */
 .footer {
@@ -489,17 +483,10 @@ body {
   text-transform: uppercase;
   color: rgba(240,244,248,0.3);
   padding: 16px 0 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 8px;
   margin-left: 58px;
 }
-.section-label::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 </style>
 </head>
 <body>
@@ -548,12 +535,11 @@ body {
     <div class="checklist-header-left">
       <span class="checklist-icon">⚡</span>
       <span class="checklist-title">入園直後にやること</span>
-      <span class="checklist-progress" id="checklist-progress">0 / 5</span>
+      <span class="checklist-progress" id="checklist-progress">0 / 6</span>
     </div>
     <span class="checklist-toggle" id="checklist-toggle">▾</span>
   </div>
-  <div class="checklist-body" id="checklist-body">
-  </div>
+  <div class="checklist-body" id="checklist-body"></div>
 </div>
 
 <div class="timeline" id="timeline">
@@ -567,7 +553,7 @@ body {
 
 <div class="footer">
   ⚓ 花火・ビリーヴは悪天候・上空気流により中止の場合があります<br>
-  当日は <a href="https://www.tokyodisneyresort.jp/tds/daily/calendar/20260427/" target="_blank">公式アプリ</a> で最終確認を<br><br>
+  当日は <a href="https://www.tokyodisneyresort.jp/tds/daily/calendar/20260427/" target="_blank">公式サイト</a> で最終確認を<br><br>
   TDS25 Day Planner — 非公式ファンツール
 </div>
 
@@ -577,35 +563,27 @@ body {
 // ================================================================
 
 const CONFIG = {
-  date: "2026-04-27",           // 来園日（YYYY-MM-DD）
+  date: "2026-04-27",
   parkName: "東京ディズニーシー",
   title: "TDS25 Day Planner",
-  openTime: "08:45",            // 公式開園時間・一般（要確認・変更可）★4/27確認済み
-  closeTime: "21:00",           // 閉園時間（要確認・変更可）★4/27確認済み
-  happyEntryTime: "08:30",      // ハッピーエントリー（ホテル宿泊者のみ・非該当）
-  earlyOpenNote: "実際の入園は混雑状況により8:30〜8:40頃に前倒しになる場合あり",
+  openTime: "08:45",    // 公式開園（一般）★4/27確認済み
+  closeTime: "21:00",   // 閉園 ★4/27確認済み
+  happyEntryTime: "08:30", // ハッピーエントリー（ホテル宿泊者のみ・非該当）
+  lateCountdownStart: "19:00", // この時刻から閉園カウントダウン表示
 };
 
 // --- 入園直後チェックリスト ---
-// text: タスク内容
 const ENTRANCE_CHECKLIST = [
-  { id: "ec1", text: "① ソアリン DPA 購入（最優先）" },
-  { id: "ec2", text: "② ビリーヴ！ DPA 購入" },
-  { id: "ec3", text: "③ セレブレーション（14:00回）エントリー受付" },
-  { id: "ec4", text: "④ グッズショップ スタンバイパス取得" },
-  { id: "ec5", text: "⑤ ジュビリーブルーメモリーズ スタンバイパス取得" },
+  { id: "ec1", text: "① アナ雪 DPA 購入（最優先・30分で完売）2,000円/人" },
+  { id: "ec2", text: "② ビリーヴ！ DPA 購入（同時保有OK）2,500円/人" },
+  { id: "ec3", text: "③ セレブレーション（14:00回）エントリー受付（無料）" },
+  { id: "ec4", text: "④ ジュビリーブルーメモリーズ スタンバイパス取得（無料）" },
+  { id: "ec5", text: "⑤ グッズショップ スタンバイパス取得（④使用後に取得）" },
+  { id: "ec6", text: "⑥ ソアリン DPA 購入（①から60分後 or 乗車後）2,000円/人" },
 ];
 
 // --- スケジュールイベント ---
-// id        : 一意のID（変更しないこと、localStorage保存に使用）
-// time      : "HH:MM" 形式
-// title     : イベント名
-// location  : 場所（省略可）
-// status    : 配列。使える値: "confirmed" "dpa" "entry" "recommended" "warning"
-// highlight : "show"（ショー・体験強調）/ "deadline"（時間制限強調）/ 省略で通常
-// note      : 詳細メモ（省略可）。\n で改行
-// checklist : サブタスク配列（省略可）[{ id, text }]
-// section   : セクションラベル（省略可）。直前に区切りを表示
+// highlight: "show"（青強調） / "deadline"（赤強調）
 const EVENTS = [
   {
     id: "park-open",
@@ -623,7 +601,7 @@ const EVENTS = [
     location: "メインエントランス",
     status: ["confirmed", "warning"],
     section: "午前",
-    note: "公式一般開園 8:45（ホテル非宿泊者）。混雑状況により8:30〜8:40頃に前倒しになる場合もあり、当日公式アプリで確認を。\n\n入園直後すぐにアプリで5つの操作を実施。友達と役割分担がおすすめ。DPAはソアリン→ビリーヴの順。アトラクションDPAは同時に1つしか保有不可（アナ雪とソアリンは同時取得不可）。",
+    note: "公式一般開園 8:45（ホテル非宿泊者）。混雑状況により8:30〜8:40頃に前倒しになる場合もあり、当日公式アプリで確認を。\n\n【入園直後の操作順】\n① アナ雪DPA（2,000円/人）← 30分以内に完売。最優先。\n② ビリーヴ！DPA（2,500円/人）← アトラクションと同時保有OK\n③ セレブレーションエントリー受付（無料）\n④ ジュビリーブルーメモリーズSP（無料）\n⑤ グッズショップSP（④使用後に取得・同時保有不可）\n⑥ ソアリンDPA（①から60分後 or 乗車後）2,000円/人\n\n⚠️ SPはショップとメモリーズを同時に持てないので順番に注意！",
     checklist: [],
   },
   {
@@ -632,7 +610,7 @@ const EVENTS = [
     title: "アナ雪 or ソアリン",
     location: "ファンタジースプリングス / アラビアンコースト奥",
     status: ["confirmed", "dpa"],
-    note: "DPAを取得できた方を優先乗車。DPAなしの場合、ソアリンの待ち時間は平日でも90〜120分超えが多い。アナ雪はDPA追加発行あり（キャンセル拾いも狙える）。",
+    note: "DPAを取得できた方を優先乗車。アナ雪DPA（2,000円/人）・ソアリンDPA（2,000円/人）。\nアトラクションDPAは同時1つのみ保有可。アナ雪乗車後or60分後にソアリンDPAを購入。\nアナ雪は午後に追加発行あり（毎時01分ごろ狙い目）。ソアリンは再販ほぼなし。",
   },
   {
     id: "memories",
@@ -641,7 +619,7 @@ const EVENTS = [
     location: "リメンブランツェ（ポンテ・ヴェッキオ橋）",
     status: ["recommended"],
     highlight: "show",
-    note: "スタンバイパス必須・2,000円。ボトル購入→ジュビリーブルーストーン選び→ブルーの空間で記念撮影のコース。所要約15〜20分。\n1人1アイテム1点制限。ハーバー近くなので次のDTGや移動とまとめて動きやすい。",
+    note: "スタンバイパス（無料）必須 + 現地で2,000円/人支払い。\nボトル購入→ジュビリーブルーストーン選び→ブルーの空間で記念撮影のコース。所要約15〜20分。\n1人1アイテム1点制限。PayPay不可・クレカ/Suica使用可。\n⚠️ グッズショップSPはこのSP使用後に取得可能。",
   },
   {
     id: "goods",
@@ -649,7 +627,7 @@ const EVENTS = [
     title: "グッズショップ（被り物・カチューシャ）",
     location: "スタンバイパス指定ショップ",
     status: ["warning"],
-    note: "スタンバイパスの指定時間になったら移動。午前中より少し落ち着いた時間帯。\n・カチューシャ 2,400円〜\n・ジュビリーバッジ 1,000円（単体）/ 1,600円（バッジ＆リボン）\nぬいぐるみ等は1人1点制限あり。",
+    note: "スタンバイパス（無料）で入店。メモリーズSP使用後に取得可能（同時保有不可・120分ルールあり）。\n・カチューシャ 2,400円〜\n・ジュビリーバッジ 1,000円（単体）/ 1,600円（バッジ＆リボン）\nぬいぐるみ等は1人1点制限あり。PayPay不可。",
   },
   {
     id: "dtg",
@@ -657,7 +635,7 @@ const EVENTS = [
     title: "★ダンス・ザ・グローブ！",
     location: "ウォーターフロントパーク（アメリカンウォーターフロント）",
     status: ["recommended", "entry"],
-    note: "25周年の新ステージショー（約25分）。ミッキー・ミラベル・ラプンツェル・ヒロが出演。フィナーレにパイロが打ちあがる演出あり。12:50 / 14:35 / 16:55 / 18:40の4公演。\nエントリー抽選 or DPA 2,500円/人。自由席（立ち見）あり。",
+    note: "25周年の新ステージショー（約25分）。ミッキー・ミラベル・ラプンツェル・ヒロが出演。フィナーレにパイロが打ちあがる演出あり。\n公演：12:50 / 14:35 / 16:55 / 18:40の4回。\nエントリー抽選（無料）or DPA 2,500円/人。自由席（立ち見）あり。\nエントリー外れたらすぐDPAを検討。",
   },
   {
     id: "harbor-move",
@@ -675,7 +653,7 @@ const EVENTS = [
     status: ["confirmed", "entry"],
     highlight: "show",
     section: "午後",
-    note: "公式時間14:00（確認済）。約15分。エントリー当選者は専用エリアへ。\nミッキー・ミニー・ドナルド・デイジー・グーフィー・プルート・ダッフィー・シェリーメイほか大集合。",
+    note: "公式時間14:00（確認済）。約15分。DPA設定なし・エントリー受付（無料抽選）のみ。\nエントリー当選者は専用エリアへ。外周からも無料で鑑賞可。\nミッキー・ミニー・ドナルド・デイジー・グーフィー・プルート・ダッフィー・シェリーメイほか大集合。",
   },
   {
     id: "lunch",
@@ -684,7 +662,7 @@ const EVENTS = [
     location: "ショーレストラン（要予約確認）",
     status: ["confirmed"],
     highlight: "show",
-    note: "休憩・25周年体験を整理するタイム。予約時間の再確認を。フード＆フェスティバル（〜6/30）の期間限定メニューも要チェック。",
+    note: "休憩・25周年体験を整理するタイム。予約時間の再確認を。\nフード＆フェスティバル（〜6/30）の期間限定メニューも要チェック。",
   },
   {
     id: "gondola-prep",
@@ -693,7 +671,7 @@ const EVENTS = [
     location: "ヴェネツィアン・ゴンドラ乗り場",
     status: ["warning"],
     highlight: "deadline",
-    note: "⚠️ 4/27の日没は18:24。受付は18:15には終了リスクあり。17:15には必ず並ぶこと。遅くとも17:00には向かい始める。",
+    note: "⚠️ 4/27の日没は18:24。受付は18:15には終了リスクあり。\n17:15には必ず並ぶこと。遅くとも17:00には向かい始める。",
   },
   {
     id: "gondola",
@@ -711,15 +689,15 @@ const EVENTS = [
     status: ["confirmed", "dpa"],
     highlight: "show",
     section: "夜",
-    note: "公式時間19:15〜（4月確認済み）。約30分。DPA完全指定席なので、指定された鑑賞エリアに時間内に向かうだけでOK。\n船体演出・噴水・プロジェクションマッピング・レーザー・小型花火が同期した壮大なショー。",
+    note: "公式時間19:15〜（4月確認済み）。約30分。DPA 2,500円/人（完全指定席）。\n平日11:00ごろ売り切れ傾向。入園直後に購入を。\n指定された鑑賞エリアに時間内に向かうだけでOK。\n船体演出・噴水・プロジェクションマッピング・レーザー・小型花火が同期した壮大なショー。",
   },
   {
     id: "columbia-move",
     time: "19:50",
-    title: "コロンビア号甲板へ移動",
-    location: "S.S.コロンビア号",
+    title: "花火鑑賞ポジションへ移動",
+    location: "リドアイル or ポンテ・ヴェッキオ",
     status: ["warning"],
-    note: "花火（20:15）に向けて早めに甲板を確保。スパークリング・ジュビリー・ナイト（環境演出）が20:00〜スタートなので、移動しながら楽しめる。",
+    note: "⚠️ S.S.コロンビア号は4/15〜6/30「ジュビリーガラ」貸切のため、一般ゲストは甲板に入れません。\nリドアイル（ハーバー沿い・花火がよく見える）またはポンテ・ヴェッキオ（橋の上・見晴らしよし）でポジション確保を。\nスパークリング・ジュビリー・ナイト（20:00〜）も移動しながら楽しめる。",
   },
   {
     id: "jubilee-night",
@@ -733,10 +711,10 @@ const EVENTS = [
     id: "fireworks",
     time: "20:15",
     title: "スカイ・フル・オブ・カラーズ（花火）🎆✦",
-    location: "S.S.コロンビア号甲板",
+    location: "リドアイル or ポンテ・ヴェッキオ",
     status: ["confirmed"],
     highlight: "show",
-    note: "公式時間20:15（確認済み）。上空気流により中止の場合あり（当日園内放送で告知）。コロンビア号甲板から最高のアングルで鑑賞。",
+    note: "公式時間20:15（確認済み）。上空気流により中止の場合あり（当日園内放送で告知）。\n⚠️ S.S.コロンビア号甲板は4/15〜6/30貸切で一般入場不可。\n【おすすめ鑑賞スポット】\n・リドアイル：ハーバー沿いで花火が近く迫力あり。人気なので早めに確保を。\n・ポンテ・ヴェッキオ：橋の上から広角で見渡せる。ジュビリーメモリーズのある橋。",
   },
   {
     id: "park-close",
@@ -753,10 +731,9 @@ const EVENTS = [
 // ★ ここより下はロジック（通常は編集不要）
 // ================================================================
 
-const STORAGE_KEY_EVENTS = "tds25_checked_v2";
+const STORAGE_KEY_EVENTS    = "tds25_checked_v2";
 const STORAGE_KEY_CHECKLIST = "tds25_entrance_checked_v2";
 
-// バッジ定義
 const BADGE_MAP = {
   confirmed:   { cls: "badge-confirmed",   label: "✓ 確定" },
   dpa:         { cls: "badge-dpa",         label: "💳 DPA" },
@@ -765,30 +742,28 @@ const BADGE_MAP = {
   warning:     { cls: "badge-warning",     label: "⚠ 要注意" },
 };
 
-// --- state ---
-let checkedEvents = {};
+let checkedEvents   = {};
 let checkedEntrance = {};
-let checkedSubs = {};
-let openNotes = {};
+let checkedSubs     = {};
+let openNotes       = {};
 
 function loadState() {
   try {
-    checkedEvents   = JSON.parse(localStorage.getItem(STORAGE_KEY_EVENTS) || "{}");
+    checkedEvents   = JSON.parse(localStorage.getItem(STORAGE_KEY_EVENTS)    || "{}");
     checkedEntrance = JSON.parse(localStorage.getItem(STORAGE_KEY_CHECKLIST) || "{}");
-    checkedSubs     = JSON.parse(localStorage.getItem("tds25_subs_v2") || "{}");
+    checkedSubs     = JSON.parse(localStorage.getItem("tds25_subs_v2")       || "{}");
     openNotes       = {};
   } catch(e) {}
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY_EVENTS,   JSON.stringify(checkedEvents));
+  localStorage.setItem(STORAGE_KEY_EVENTS,    JSON.stringify(checkedEvents));
   localStorage.setItem(STORAGE_KEY_CHECKLIST, JSON.stringify(checkedEntrance));
   localStorage.setItem("tds25_subs_v2",       JSON.stringify(checkedSubs));
 }
 
-// --- 時刻パース ---
-function parseTime(timeStr) {
-  const [h, m] = timeStr.split(":").map(Number);
+function parseTime(t) {
+  const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
 }
 
@@ -797,16 +772,15 @@ function nowMinutes() {
   return n.getHours() * 60 + n.getMinutes();
 }
 
-// --- イベント状態判定 ---
 function getEventState(ev, nowMin) {
-  const evMin = parseTime(ev.time);
   if (checkedEvents[ev.id]) return "done";
+  const evMin = parseTime(ev.time);
   if (nowMin > evMin + 30) return "past";
   if (Math.abs(nowMin - evMin) <= 30) return "current";
   return "future";
 }
 
-// --- チェックリスト描画 ---
+// --- チェックリスト ---
 function renderChecklist() {
   const body = document.getElementById("checklist-body");
   body.innerHTML = "";
@@ -816,41 +790,126 @@ function renderChecklist() {
     div.className = "check-item" + (done ? " done" : "");
     div.innerHTML = `<div class="check-box ${done ? 'done' : ''}"></div><span class="check-label">${item.text}</span>`;
     div.addEventListener("click", () => {
-      checkedEntrance[item.id] = !checkedEntrance[item.id];
+      const wasDone = !!checkedEntrance[item.id];
+      checkedEntrance[item.id] = !wasDone;
       saveState();
       renderChecklist();
+      // 全完了チェック（チェックを入れた時のみ）
+      if (!wasDone) {
+        const allDone = ENTRANCE_CHECKLIST.every(i => checkedEntrance[i.id]);
+        if (allDone) showChecklistComplete();
+      }
     });
     body.appendChild(div);
   });
   updateChecklistProgress();
 }
 
+// チェックリスト全完了セレブレーション
+function showChecklistComplete() {
+  const overlay = document.createElement("div");
+  overlay.className = "checklist-complete-overlay";
+
+  // 花火の色セット（サイトのテーマカラー）
+  const palettes = [
+    ["#4faad9","#7ecfef","#a8dcf5"],  // ブルー系
+    ["#e8c97a","#c9a84c","#f0d898"],  // ゴールド系
+    ["#7edda8","#4caf7d","#a0e8c8"],  // グリーン系
+    ["#f0f4f8","#b0c8e0","#d0e4f4"],  // ホワイト系
+  ];
+
+  const BURSTS   = 5;   // 花火の爆発数
+  const W = window.innerWidth, H = window.innerHeight;
+
+  // 爆発ポイントをランダムに配置（画面を覆う範囲）
+  const burst_origins = [
+    { x: W * 0.25, y: H * 0.30 },
+    { x: W * 0.75, y: H * 0.25 },
+    { x: W * 0.50, y: H * 0.50 },
+    { x: W * 0.20, y: H * 0.65 },
+    { x: W * 0.80, y: H * 0.60 },
+  ];
+
+  burst_origins.forEach((origin, bi) => {
+    const pal   = palettes[bi % palettes.length];
+    const RAYS  = 12 + Math.floor(Math.random() * 8);
+    const baseDelay = bi * 0.12;
+
+    for (let r = 0; r < RAYS; r++) {
+      const angle  = (r / RAYS) * 360 + (Math.random() - 0.5) * 15;
+      const len    = 40 + Math.random() * 80;
+      const dur    = (0.7 + Math.random() * 0.4).toFixed(2);
+      const delay  = (baseDelay + Math.random() * 0.08).toFixed(2);
+      const color  = pal[Math.floor(Math.random() * pal.length)];
+      const rad    = angle * Math.PI / 180;
+
+      // 光線
+      const beam = document.createElement("div");
+      beam.className = "fw-beam";
+      beam.style.cssText = `
+        left: ${origin.x}px; top: ${origin.y}px;
+        height: ${len}px;
+        background: linear-gradient(to top, transparent, ${color});
+        opacity: 0.85;
+        --angle: ${angle}deg; --dur: ${dur}s; --delay: ${delay}s;
+      `;
+      overlay.appendChild(beam);
+
+      // 先端の光点
+      const ex = Math.round(Math.cos((angle - 90) * Math.PI / 180) * len);
+      const ey = Math.round(Math.sin((angle - 90) * Math.PI / 180) * len);
+      const dot = document.createElement("div");
+      dot.className = "fw-dot";
+      dot.style.cssText = `
+        left: ${origin.x}px; top: ${origin.y}px;
+        background: ${color};
+        box-shadow: 0 0 4px 2px ${color}55;
+        --ex: ${ex}px; --ey: ${ey}px;
+        --dur: ${(parseFloat(dur) + 0.25).toFixed(2)}s; --delay: ${delay}s;
+      `;
+      overlay.appendChild(dot);
+    }
+  });
+
+  document.body.appendChild(overlay);
+
+  // 1.8秒後にフェードアウトしてチェックリストを閉じる
+  setTimeout(() => {
+    overlay.style.transition = "opacity 0.5s ease";
+    overlay.style.opacity    = "0";
+    setTimeout(() => {
+      overlay.remove();
+      const cl = document.getElementById("checklist-body");
+      const tg = document.getElementById("checklist-toggle");
+      cl.classList.remove("open");
+      tg.classList.remove("open");
+    }, 500);
+  }, 1800);
+}
+
 function updateChecklistProgress() {
-  const done = Object.values(checkedEntrance).filter(Boolean).length;
+  const done  = Object.values(checkedEntrance).filter(Boolean).length;
   const total = ENTRANCE_CHECKLIST.length;
   document.getElementById("checklist-progress").textContent = `${done} / ${total}`;
 }
 
 function toggleChecklist() {
-  const body = document.getElementById("checklist-body");
+  const body   = document.getElementById("checklist-body");
   const toggle = document.getElementById("checklist-toggle");
   const isOpen = body.classList.contains("open");
   body.classList.toggle("open", !isOpen);
   toggle.classList.toggle("open", !isOpen);
 }
 
-// --- タイムライン描画 ---
+// --- タイムライン ---
 function renderTimeline(skipAnim = false) {
   const container = document.getElementById("timeline");
-  // 既存イベントカードを削除（now-indicatorとtimeline-lineは保持）
-  const existing = container.querySelectorAll(".event-item, .section-label");
-  existing.forEach(e => e.remove());
+  container.querySelectorAll(".event-item, .section-label").forEach(e => e.remove());
 
-  const nowMin = nowMinutes();
-  let lastSection = null;
+  const nowMin     = nowMinutes();
+  let lastSection  = null;
 
-  EVENTS.forEach((ev, idx) => {
-    // セクションラベル
+  EVENTS.forEach((ev) => {
     if (ev.section && ev.section !== lastSection) {
       const lbl = document.createElement("div");
       lbl.className = "section-label";
@@ -859,60 +918,52 @@ function renderTimeline(skipAnim = false) {
       lastSection = ev.section;
     }
 
-    const state = getEventState(ev, nowMin);
-    const isDone = state === "done";
-    const isPast = state === "past";
-    const isCurrent = state === "current";
+    const state    = getEventState(ev, nowMin);
+    const isDone   = state === "done";
+    const isPast   = state === "past";
+    const isCurrent= state === "current";
+    const hlCls    = ev.highlight ? `hl-${ev.highlight}` : '';
 
     const item = document.createElement("div");
-    item.className = `event-item ${isPast ? 'past' : ''} ${isCurrent ? 'current' : ''} ${isDone ? 'done' : ''} ${ev.highlight ? 'hl-' + ev.highlight : ''}`.replace(/\s+/g,' ').trim();
+    item.className = `event-item ${isPast?'past':''} ${isCurrent?'current':''} ${isDone?'done':''} ${hlCls}`.replace(/\s+/g,' ').trim();
     item.id = `ev-${ev.id}`;
 
-    // バッジHTML
     const badgesHtml = (ev.status || []).map(s => {
       const b = BADGE_MAP[s];
       return b ? `<span class="badge ${b.cls}">${b.label}</span>` : "";
     }).join("");
 
-    // サブチェックリスト
     let subHtml = "";
     if (ev.checklist && ev.checklist.length > 0) {
       subHtml = `<div class="event-checklist">` +
         ev.checklist.map(sub => {
           const subDone = !!checkedSubs[sub.id];
-          return `<div class="event-check-sub ${subDone ? 'done' : ''}" onclick="toggleSub('${sub.id}', event)">
-            <div class="sub-box ${subDone ? 'done' : ''}"></div>
-            <span>${sub.text}</span>
+          return `<div class="event-check-sub ${subDone?'done':''}" onclick="toggleSub('${sub.id}',event)">
+            <div class="sub-box ${subDone?'done':''}"></div><span>${sub.text}</span>
           </div>`;
-        }).join("") +
-        `</div>`;
+        }).join("") + `</div>`;
     }
 
-    // メモ
-    const noteOpen = !!openNotes[ev.id];
+    const noteOpen  = !!openNotes[ev.id];
     const noteLines = ev.note ? ev.note.split("\n").map(l => `<p>${l}</p>`).join("") : "";
-    const noteHtml = ev.note ? `
-      <div class="event-note-toggle ${noteOpen ? 'open' : ''}" onclick="toggleNote('${ev.id}', event)">
-        <span class="arrow">›</span> メモを${noteOpen ? '閉じる' : '見る'}
+    const noteHtml  = ev.note ? `
+      <div class="event-note-toggle" onclick="toggleNote('${ev.id}',event)">
+        <span class="toggle-icon">${noteOpen ? '▴' : '▾'}</span>
+        <span class="toggle-label">${noteOpen ? 'メモを閉じる' : 'メモを見る'}</span>
       </div>
-      <div class="event-note-body ${noteOpen ? 'open' : ''}" id="note-${ev.id}">
+      <div class="event-note-body ${noteOpen?'open':''}" id="note-${ev.id}">
         ${noteLines}${subHtml}
       </div>
     ` : (subHtml ? `<div class="event-note-body open">${subHtml}</div>` : "");
 
-    const hlCardClass = ev.highlight ? `hl-${ev.highlight}` : '';
     item.innerHTML = `
-      <div class="event-time-col">
-        <span class="event-time">${ev.time}</span>
-      </div>
-      <div class="event-dot-col">
-        <div class="event-dot"></div>
-      </div>
+      <div class="event-time-col"><span class="event-time">${ev.time}</span></div>
+      <div class="event-dot-col"><div class="event-dot"></div></div>
       <div class="event-card-col">
-        <div class="event-card ${hlCardClass}">
+        <div class="event-card ${hlCls}">
           <div class="event-card-top">
             <span class="event-title">${ev.title}</span>
-            <button class="event-check-btn ${isDone ? 'done' : ''}" onclick="toggleEventDone('${ev.id}', event)" aria-label="完了">
+            <button class="event-check-btn ${isDone?'done':''}" onclick="toggleEventDone('${ev.id}',event)" aria-label="完了">
               ${isDone ? '✓' : ''}
             </button>
           </div>
@@ -922,11 +973,9 @@ function renderTimeline(skipAnim = false) {
         </div>
       </div>
     `;
-
     container.appendChild(item);
   });
 
-  // アニメーション：skipAnim=true なら即表示、false なら IntersectionObserver でスクロール検知
   if (skipAnim) {
     container.querySelectorAll('.event-item').forEach(el => {
       el.style.transitionDelay = '0s';
@@ -935,10 +984,7 @@ function renderTimeline(skipAnim = false) {
   } else {
     const obs = new IntersectionObserver((entries) => {
       entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          obs.unobserve(e.target);
-        }
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
       });
     }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
     container.querySelectorAll('.event-item').forEach((el, i) => {
@@ -947,44 +993,33 @@ function renderTimeline(skipAnim = false) {
     });
   }
 }
-// --- now-indicator 位置更新 ---
+
+// --- now-indicator ---
 function updateNowIndicator() {
   const container = document.getElementById("timeline");
   const indicator = document.getElementById("now-indicator");
-  const nowMin = nowMinutes();
+  const nowMin    = nowMinutes();
+  const first     = parseTime(EVENTS[0].time);
+  const last      = parseTime(EVENTS[EVENTS.length - 1].time);
 
-  // 現在時刻が最初と最後のイベントの間にある場合のみ表示
-  const first = parseTime(EVENTS[0].time);
-  const last  = parseTime(EVENTS[EVENTS.length - 1].time);
-  if (nowMin < first - 30 || nowMin > last + 60) {
-    indicator.style.display = "none";
-    return;
-  }
+  if (nowMin < first - 30 || nowMin > last + 60) { indicator.style.display = "none"; return; }
 
-  // 直前・直後のイベントを探してtop位置を計算
   let prevItem = null, nextItem = null;
-  let prevMin = first, nextMin = last;
+  let prevMin  = first, nextMin  = last;
 
   for (let i = 0; i < EVENTS.length; i++) {
     const eMin = parseTime(EVENTS[i].time);
-    const el = document.getElementById(`ev-${EVENTS[i].id}`);
+    const el   = document.getElementById(`ev-${EVENTS[i].id}`);
     if (!el) continue;
-    if (eMin <= nowMin) { prevItem = el; prevMin = eMin; }
-    else if (!nextItem) { nextItem = el; nextMin = eMin; }
+    if (eMin <= nowMin)      { prevItem = el; prevMin = eMin; }
+    else if (!nextItem)      { nextItem = el; nextMin = eMin; }
   }
 
   if (!prevItem) { indicator.style.display = "none"; return; }
 
-  const timelineRect = container.getBoundingClientRect();
-  const prevRect = prevItem.getBoundingClientRect();
-
   let top;
   if (nextItem) {
-    const nextRect = nextItem.getBoundingClientRect();
     const ratio = (nowMin - prevMin) / Math.max(nextMin - prevMin, 1);
-    const prevTop = prevRect.top + prevRect.height / 2 - timelineRect.top + container.scrollTop;
-    const nextTop = nextRect.top + nextRect.height / 2 - timelineRect.top + container.scrollTop;
-    // ページ全体の位置で計算（scrollTop使えない場合）
     top = prevItem.offsetTop + prevItem.offsetHeight / 2 +
           ratio * (nextItem.offsetTop + nextItem.offsetHeight / 2 - prevItem.offsetTop - prevItem.offsetHeight / 2);
   } else {
@@ -999,12 +1034,12 @@ function updateNowIndicator() {
   document.getElementById("now-label").textContent = `${h}:${m}`;
 }
 
-// --- 次イベント更新 ---
+// --- 次イベント ---
 function updateNextEvent() {
   const nowMin = nowMinutes();
-  const next = EVENTS.find(ev => !checkedEvents[ev.id] && parseTime(ev.time) > nowMin);
+  const next   = EVENTS.find(ev => !checkedEvents[ev.id] && parseTime(ev.time) > nowMin);
   if (!next) {
-    document.getElementById("next-title").textContent = "本日のイベント終了";
+    document.getElementById("next-title").textContent    = "本日のイベント終了";
     document.getElementById("next-time-str").textContent = "";
     return;
   }
@@ -1015,26 +1050,64 @@ function updateNextEvent() {
     const base = h > 0 ? `あと${h}時間${m}分` : `あと${m}分`;
     return h > 0 ? `${base}（${d}分）` : base;
   };
-  document.getElementById("next-time-str").textContent =
-    diff <= 0 ? "今！" : fmtDiff(diff);
+  document.getElementById("next-time-str").textContent = diff <= 0 ? "今！" : fmtDiff(diff);
 }
 
 function scrollToNext() {
   const nowMin = nowMinutes();
-  const next = EVENTS.find(ev => !checkedEvents[ev.id] && parseTime(ev.time) > nowMin);
+  const next   = EVENTS.find(ev => !checkedEvents[ev.id] && parseTime(ev.time) > nowMin);
   if (!next) return;
   const el = document.getElementById(`ev-${next.id}`);
   if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-// --- クロック更新 ---
+// --- クロック ---
 function updateClock() {
   const now = new Date();
-  const h = now.getHours().toString().padStart(2,"0");
-  const m = now.getMinutes().toString().padStart(2,"0");
-  const s = now.getSeconds().toString().padStart(2,"0");
+  const h   = now.getHours().toString().padStart(2,"0");
+  const m   = now.getMinutes().toString().padStart(2,"0");
   document.getElementById("clock-time").textContent = `${h}:${m}`;
   document.getElementById("clock-date").textContent = CONFIG.date.replace(/-/g,"/");
+}
+
+// --- 開園・閉園時間バー ---
+function updateParkHours() {
+  document.getElementById("ph-open").textContent  = CONFIG.openTime;
+  document.getElementById("ph-close").textContent = CONFIG.closeTime;
+  document.getElementById("ph-happy").textContent = CONFIG.happyEntryTime;
+
+  const nowMin      = nowMinutes();
+  const openMin     = parseTime(CONFIG.openTime);
+  const closeMin    = parseTime(CONFIG.closeTime);
+  const lateMin     = parseTime(CONFIG.lateCountdownStart); // 19:00
+  const remainEl    = document.getElementById("ph-remain");
+
+  if (nowMin < openMin) {
+    // 開園前（当日早朝 or 日付変更後）
+    const diff = openMin - nowMin;
+    const h = Math.floor(diff / 60), m = diff % 60;
+    const base = h > 0 ? `開園まであと${h}時間${m}分` : `開園まであと${m}分`;
+    remainEl.textContent = h > 0 ? `${base}（${diff}分）` : base;
+    remainEl.className   = "ph-remain";
+
+  } else if (nowMin >= openMin && nowMin < lateMin) {
+    // 開園中（〜19:00）
+    remainEl.textContent = "✦ 開園中";
+    remainEl.className   = "ph-remain open-badge";
+
+  } else if (nowMin >= lateMin && nowMin < closeMin) {
+    // 19:00〜閉園
+    const diff = closeMin - nowMin;
+    const h = Math.floor(diff / 60), m = diff % 60;
+    const base = h > 0 ? `閉園まであと${h}時間${m}分` : `閉園まであと${m}分`;
+    remainEl.textContent = h > 0 ? `${base}（${diff}分）` : base;
+    remainEl.className   = "ph-remain open-late";
+
+  } else if (nowMin >= closeMin) {
+    // 21:00〜23:59
+    remainEl.textContent = "本日は閉園しました";
+    remainEl.className   = "ph-remain closed";
+  }
 }
 
 // --- インタラクション ---
@@ -1042,6 +1115,21 @@ function toggleEventDone(id, e) {
   e.stopPropagation();
   checkedEvents[id] = !checkedEvents[id];
   saveState();
+
+  // チェックON時にリップルを発生させる
+  if (checkedEvents[id]) {
+    const btn  = e.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    const x    = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const y    = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    const rip  = document.createElement("span");
+    rip.className  = "ripple-circle";
+    rip.style.left = `${x}px`;
+    rip.style.top  = `${y}px`;
+    btn.appendChild(rip);
+    rip.addEventListener("animationend", () => rip.remove());
+  }
+
   renderTimeline(true);
   updateNowIndicator();
   updateNextEvent();
@@ -1049,13 +1137,22 @@ function toggleEventDone(id, e) {
 
 function toggleNote(id, e) {
   e.stopPropagation();
-  openNotes[id] = !openNotes[id];
-  const noteEl = document.getElementById(`note-${id}`);
-  const toggleEl = e.currentTarget;
-  if (noteEl) {
-    noteEl.classList.toggle("open", !!openNotes[id]);
-    toggleEl.classList.toggle("open", !!openNotes[id]);
-    toggleEl.childNodes[1].textContent = openNotes[id] ? " メモを閉じる" : " メモを見る";
+  openNotes[id]   = !openNotes[id];
+  const isOpen    = !!openNotes[id];
+  const noteEl    = document.getElementById(`note-${id}`);
+  const toggleEl  = e.currentTarget;
+
+  if (noteEl) noteEl.classList.toggle("open", isOpen);
+
+  const icon  = toggleEl.querySelector('.toggle-icon');
+  const label = toggleEl.querySelector('.toggle-label');
+  if (icon)  icon.textContent = isOpen ? '▴' : '▾';
+  if (label) {
+    label.style.opacity = '0';
+    setTimeout(() => {
+      label.textContent    = isOpen ? 'メモを閉じる' : 'メモを見る';
+      label.style.opacity  = '1';
+    }, 120);
   }
 }
 
@@ -1063,42 +1160,13 @@ function toggleSub(id, e) {
   e.stopPropagation();
   checkedSubs[id] = !checkedSubs[id];
   saveState();
-  const el = e.currentTarget;
-  el.classList.toggle("done", !!checkedSubs[id]);
+  const el  = e.currentTarget;
   const box = el.querySelector(".sub-box");
+  el.classList.toggle("done", !!checkedSubs[id]);
   box.classList.toggle("done", !!checkedSubs[id]);
 }
 
-// --- 開園・閉園時間表示 ---
-function updateParkHours() {
-  document.getElementById("ph-open").textContent  = CONFIG.openTime;
-  document.getElementById("ph-close").textContent = CONFIG.closeTime;
-  document.getElementById("ph-happy").textContent = CONFIG.happyEntryTime;
-
-  const nowMin   = nowMinutes();
-  const openMin  = parseTime(CONFIG.openTime);
-  const closeMin = parseTime(CONFIG.closeTime);
-  const remainEl = document.getElementById("ph-remain");
-
-  if (nowMin < openMin) {
-    const diff = openMin - nowMin;
-    const h = Math.floor(diff / 60), m = diff % 60;
-    const base = h > 0 ? `開園まであと${h}時間${m}分` : `開園まであと${m}分`;
-    remainEl.textContent = h > 0 ? `${base}（${diff}分）` : base;
-    remainEl.className = "ph-remain";
-  } else if (nowMin >= openMin && nowMin < closeMin) {
-    const diff = closeMin - nowMin;
-    const h = Math.floor(diff / 60), m = diff % 60;
-    const base = h > 0 ? `閉園まであと${h}時間${m}分` : `閉園まであと${m}分`;
-    remainEl.textContent = h > 0 ? `${base}（${diff}分）` : base;
-    remainEl.className = "ph-remain open-now";
-  } else {
-    remainEl.textContent = "閉園済み";
-    remainEl.className = "ph-remain closed";
-  }
-}
-
-
+// --- 初期化 ---
 function init() {
   loadState();
   renderChecklist();
@@ -1108,11 +1176,8 @@ function init() {
   updateNowIndicator();
   updateNextEvent();
 
-  setInterval(() => {
-    updateClock();
-  }, 1000);
+  setInterval(updateClock, 1000);
 
-  // 1分ごとにインジケーター・次イベント更新
   setInterval(() => {
     updateParkHours();
     updateNowIndicator();
@@ -1120,7 +1185,6 @@ function init() {
     renderTimeline(true);
   }, 60000);
 
-  // チェックリストを初期表示（全未完の場合は開く）
   const allDone = ENTRANCE_CHECKLIST.every(i => checkedEntrance[i.id]);
   if (!allDone) {
     document.getElementById("checklist-body").classList.add("open");
